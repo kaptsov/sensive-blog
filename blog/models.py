@@ -1,6 +1,17 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.db.models import Count
+
+
+class PostQuerySet(models.QuerySet):
+
+    def year(self, year):
+        posts_at_year = self.filter(published_at__year=year).order_by('published_at')
+        return posts_at_year
+
+    def popular(self):
+        return self.annotate(num_likes=Count('likes')).order_by('-num_likes')
 
 
 class Post(models.Model):
@@ -9,7 +20,7 @@ class Post(models.Model):
     slug = models.SlugField('Название в виде url', max_length=200)
     image = models.ImageField('Картинка')
     published_at = models.DateTimeField('Дата и время публикации')
-
+    objects = PostQuerySet.as_manager()
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
