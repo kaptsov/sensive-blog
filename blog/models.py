@@ -25,6 +25,20 @@ class PostQuerySet(models.QuerySet):
         fresh_posts = self.order_by('-published_at').prefetch_related('author')
         return fresh_posts
 
+    def fetch_with_comments_count(self):
+        # Запрос загружается только при обращении к нему.
+
+        ids = [post.id for post in self]
+        posts_with_comments = Post.objects.filter(id__in=ids).annotate(
+            comments_count=models.Count("comments")
+        )
+        ids_and_comments = posts_with_comments.values_list(
+            "id", "comments_count"
+        )
+        count_for_id = dict(ids_and_comments)
+        for post in self:
+            post.comments_count = count_for_id[post.id]
+        return self
 
 
 class Post(models.Model):
