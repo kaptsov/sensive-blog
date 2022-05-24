@@ -54,23 +54,24 @@ def index(request):
 def post_detail(request, slug):
 
     post = Post.objects\
-        .prefetch_related("comments", get_tags_prefetch())\
-        .annotate(likes_count=Count('likes'))\
+        .select_related('author')\
+        .annotate(num_likes=Count('likes'))\
         .get(slug=slug)
 
     most_popular_posts = Post.objects\
         .popular()\
-        .prefetch_related('author', get_tags_prefetch())[:5]\
+        .prefetch_related('author')\
+        .prefetch_related(Prefetch('tags', Tag.objects.annotate(num_posts=Count('posts'))))[:5]\
         .fetch_with_comments_count()
 
     tags = Tag.objects.popular()
     most_popular_tags = Tag.objects.popular()[:5]
     related_tags = tags.filter(posts__in=[post])
 
-    comments = Comment.objects.prefetch_related("author")
+    comments = Comment.objects.select_related('author').all()
     post_comments = comments.filter(post=post)
 
-    likes_amount = post.likes.count
+    likes_amount = post.num_likes
 
     serialized_post = {
         "title": post.title,
