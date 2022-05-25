@@ -11,4 +11,5 @@ class AdminPost(admin.ModelAdmin):
 class AdminComment(admin.ModelAdmin):
     raw_id_fields = ['author', 'post']
 
+
 admin.site.register(Tag)
